@@ -12,8 +12,11 @@ Call setup_demo() to reset and repopulate the scenario from scratch.
 TODO (before production): disable or protect the /demo/setup endpoint.
 """
 
+from datetime import datetime, timedelta, timezone
+
 from app.db.dynamodb import (
     delete_all_user_items,
+    get_vault_table,
     mark_pending_release,
     put_encrypted_vault_entry,
     put_user_metadata,
@@ -114,9 +117,24 @@ _DEMO_VAULT_ENTRIES = [
 
 
 def create_demo_user() -> dict:
-    """Resets all demo user data and creates a fresh ACTIVE account."""
+    """Resets all demo user data and creates an account backdated 91 days to simulate expiry."""
     delete_all_user_items(DEMO_EMAIL)
-    return put_user_metadata(DEMO_EMAIL, DEMO_NOMINEE_EMAIL)
+    item = put_user_metadata(DEMO_EMAIL, DEMO_NOMINEE_EMAIL)
+
+    # Backdate last_checkin_at and next_check_due_at so the demo user genuinely
+    # appears to have missed their 90-day window. Without this, both timestamps
+    # sit in the future (fresh creation), contradicting PENDING_RELEASE status.
+    now = datetime.now(timezone.utc)
+    overdue_checkin = (now - timedelta(days=91)).isoformat()
+    overdue_due = (now - timedelta(days=1)).isoformat()
+
+    table = get_vault_table()
+    table.update_item(
+        Key={"PK": item["PK"], "SK": "METADATA"},
+        UpdateExpression="SET last_checkin_at = :checkin, next_check_due_at = :due",
+        ExpressionAttributeValues={":checkin": overdue_checkin, ":due": overdue_due},
+    )
+    return {**item, "last_checkin_at": overdue_checkin, "next_check_due_at": overdue_due}
 
 
 def create_demo_vault(email: str) -> list[dict]:

@@ -447,7 +447,7 @@ export default function AethelgardApp() {
                 <Button
                   type="submit"
                   variant="outline"
-                  className="w-full border-white/20 text-white hover:bg-white/10"
+                  className="w-full border-white/20 bg-transparent text-white hover:bg-white/10"
                   disabled={loading}
                 >
                   {loading ? (
@@ -472,9 +472,14 @@ export default function AethelgardApp() {
   }
 
   // ── Dashboard ─────────────────────────────────────────────────────────────────
-  const daysLeft = userData
-    ? daysUntilDue(userData.last_checkin_at, userData.dead_man_switch_days, userData.next_check_due_at)
-    : null;
+  // daysLeft is only meaningful for ACTIVE vaults.
+  // PENDING_RELEASE is always 0 (overdue); RELEASED is not applicable (null).
+  const daysLeft: number | null =
+    userData?.status === "ACTIVE"
+      ? daysUntilDue(userData.last_checkin_at, userData.dead_man_switch_days, userData.next_check_due_at)
+      : userData?.status === "PENDING_RELEASE"
+      ? 0
+      : null;
 
   const isPendingRelease = userData?.status === "PENDING_RELEASE";
 
@@ -530,8 +535,7 @@ export default function AethelgardApp() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Legacy Release Pending</AlertTitle>
             <AlertDescription>
-              You have not checked in for {userData?.dead_man_switch_days ?? 90} days.
-              Press &quot;I AM OK&quot; right now to cancel the release of your vault.
+              Your check-in window has expired. Press &quot;I AM OK&quot; right now to cancel the release of your vault.
             </AlertDescription>
           </Alert>
         )}
@@ -596,7 +600,9 @@ export default function AethelgardApp() {
             <div className="flex justify-between text-sm">
               <span className="text-slate-400">Next check-in due</span>
               <span className="text-white font-medium">
-                {userData?.next_check_due_at
+                {userData?.status !== "ACTIVE"
+                  ? "—"
+                  : userData?.next_check_due_at
                   ? formatDate(userData.next_check_due_at)
                   : userData
                   ? formatDate(new Date(new Date(userData.last_checkin_at).getTime() + userData.dead_man_switch_days * 86400000).toISOString())
@@ -612,7 +618,11 @@ export default function AethelgardApp() {
                   : "text-red-400"
                 }`}
               >
-                {daysLeft !== null ? `${daysLeft} days` : "—"}
+                {userData?.status === "PENDING_RELEASE"
+                  ? "Overdue"
+                  : daysLeft !== null
+                  ? `${daysLeft} days`
+                  : "—"}
               </span>
             </div>
             {userData && daysLeft !== null && (
