@@ -476,3 +476,25 @@ See `DEPLOYMENT_CHECKLIST.md` for the full production deployment guide.
 - [ ] Vault sharing with time-limited read tokens
 - [ ] Audit log for all vault access events
 - [ ] GDPR / data deletion request workflow
+
+---
+
+## Screenshots
+
+### Landing Page
+![Landing Page](screenshots/landing-page.png)
+
+### Create Vault
+![Create Vault](screenshots/create-vault.png)
+
+### Dashboard
+![Dashboard](screenshots/dashboard.png)
+
+### Legacy Vault Entry
+![Legacy Vault Entry](screenshots/legacy-vault-entry.png)
+
+### Family Guide
+![Family Guide](screenshots/family-guide.png)
+
+### Architecture
+![Architecture](screenshots/architecture.png)
