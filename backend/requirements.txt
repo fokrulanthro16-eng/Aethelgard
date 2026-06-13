@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+boto3
+botocore
+pydantic
+pydantic-settings
+python-dotenv
+pytest
+httpx
+email-validator
+moto[dynamodb]
+moto[kms]
+cryptography
+google-generativeai
